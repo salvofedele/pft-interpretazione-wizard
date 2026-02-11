@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PFT Interpretation Wizard (Spirometria • Volumi • DLCO)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --text:#e7ecff;
+      --muted:#b8c1ff;
+      --muted2:#91a0ff;
+      --border:rgba(255,255,255,.12);
+      --accent:#7aa2ff;
+      --accent2:#3ee2b8;
+      --warn:#ffcc66;
+      --danger:#ff6b6b;
+      --shadow: 0 14px 50px rgba(0,0,0,.40);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(122,162,255,.20), transparent 55%),
+                  radial-gradient(1200px 800px at 80% 20%, rgba(62,226,184,.14), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent)}
+    .wrap{max-width:1080px;margin:0 auto;padding:28px 18px 40px}
+    header{
+      display:flex; gap:16px; align-items:flex-start; justify-content:space-between;
+      margin-bottom:18px;
+    }
+    .title{display:flex; flex-direction:column; gap:6px;}
+    h1{font-size:20px;margin:0;letter-spacing:.2px}
+    .subtitle{color:var(--muted);font-size:13px;line-height:1.35}
+    .pillbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      display:flex; gap:8px; align-items:center;
+      user-select:none;
+    }
+    .pill strong{color:var(--text);font-weight:600}
+    .grid{display:grid;grid-template-columns: 1fr;gap:16px;}
+    @media (min-width: 980px){.grid{grid-template-columns: 1.35fr .65fr}}
+    .card{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:16px 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    }
+    .card .hd h2{margin:0;font-size:16px}
+    .badge{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .card .bd{padding:18px}
+    .prompt{font-size:15px;line-height:1.35;margin:0 0 10px 0}
+    .help{margin:0 0 14px 0;color:var(--muted);font-size:13px;line-height:1.45;}
+    .opts{display:grid;gap:10px}
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:14px;
+      padding:12px 12px;
+      text-align:left;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      line-height:1.25;
+    }
+    .btn:hover{background: rgba(255,255,255,.08); border-color:rgba(255,255,255,.22)}
+    .btn:active{transform: translateY(1px)}
+    .btn .small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn2{
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12.5px;
+      font-weight:600;
+      background: rgba(122,162,255,.18);
+      border:1px solid rgba(122,162,255,.35);
+    }
+    .btn2:hover{background: rgba(122,162,255,.24)}
+    .btn3{
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12.5px;
+      font-weight:600;
+      background: rgba(255,255,255,.05);
+      border:1px solid var(--border);
+    }
+    .btn3:hover{background: rgba(255,255,255,.08)}
+    .btnDanger{
+      background: rgba(255,107,107,.14);
+      border:1px solid rgba(255,107,107,.38);
+    }
+    .btnDanger:hover{background: rgba(255,107,107,.20)}
+    .btnOk{
+      background: rgba(62,226,184,.14);
+      border:1px solid rgba(62,226,184,.34);
+    }
+    .btnOk:hover{background: rgba(62,226,184,.20)}
+    .kpi{display:grid;grid-template-columns: 1fr 1fr;gap:10px;margin-top:10px;}
+    .kpi .box{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.15);
+    }
+    .kpi .box .t{font-size:11px;color:var(--muted);margin-bottom:4px}
+    .kpi .box .v{font-family:var(--mono);font-size:12px;color:var(--text)}
+    .list{margin:10px 0 0 0;padding-left:18px;color:var(--text);}
+    .list li{margin:6px 0; color:var(--text)}
+    .muted{color:var(--muted)}
+    .divider{height:1px;background:var(--border);margin:14px 0}
+    .toast{
+      position:fixed; right:18px; bottom:18px;
+      background: rgba(18,26,51,.96);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--text);
+      box-shadow:var(--shadow);
+      display:none;
+      max-width:min(520px, calc(100vw - 36px));
+      z-index:9999;
+    }
+    .toast .t{font-weight:700;margin-bottom:4px;font-size:12.5px}
+    .toast .m{color:var(--muted);font-size:12.5px;line-height:1.35}
+    .side .bd{padding:16px}
+    .miniTitle{font-size:12px;letter-spacing:.3px;text-transform:uppercase;color:var(--muted2);margin:0 0 10px}
+    .crumbs{font-size:12.5px;line-height:1.45;color:var(--muted);word-break:break-word;}
+    .crumbs code{font-family:var(--mono);font-size:11.5px;color:var(--text);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:8px;border:1px solid var(--border)}
+    details{border:1px solid var(--border);border-radius:14px;padding:10px 12px;background:rgba(0,0,0,.15);}
+    summary{cursor:pointer;color:var(--text);font-weight:700}
+    details p{margin:8px 0 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+    .ref{font-size:12.5px; line-height:1.45; color:var(--muted);}
+    .ref ol{margin:8px 0 0 18px;padding:0}
+    .ref li{margin:6px 0}
+    .tag{
+      display:inline-block;
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      margin-right:6px;
+      margin-top:6px;
+    }
+    .leafHead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    .leafHead .tagStrong{
+      background:rgba(62,226,184,.12);
+      border-color:rgba(62,226,184,.28);
+      color:var(--text);
+    }
+    .warnBox{
+      border:1px solid rgba(255,204,102,.35);
+      background: rgba(255,204,102,.10);
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--text);
+    }
+    .dangerBox{
+      border:1px solid rgba(255,107,107,.35);
+      background: rgba(255,107,107,.10);
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>PFT Interpretation Wizard</h1>
+        <div class="subtitle">
+          Interpretazione fisiologica <span class="muted">(adulti)</span> basata su spirometria, volumi (pletismografia) e DLCO,
+          con estensione per quadri <em>misti</em> (chest wall / neuromuscolare / diaframma) anche quando la DLCO è ridotta.
+          <br>
+          <span class="muted">Uso didattico/clinico-operativo: non sostituisce giudizio clinico; integra anamnesi, EO e imaging.</span>
+        </div>
+      </div>
+      <div class="pillbar">
+        <div class="pill"><strong>Back</strong> + <strong>Copy</strong></div>
+        <div class="pill">Single-file <strong>HTML</strong></div>
+        <div class="pill">GitHub Pages-friendly</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card" id="mainCard">
+        <div class="hd">
+          <div>
+            <h2 id="stepTitle">—</h2>
+            <div class="subtitle" id="stepSubtitle"></div>
+          </div>
+          <div class="badge" id="stepBadge">Wizard</div>
+        </div>
+        <div class="bd" id="mainBody"></div>
+      </div>
+
+      <div class="card side">
+        <div class="hd">
+          <h2>Traccia & note</h2>
+          <div class="badge" id="stateBadge">0 step</div>
+        </div>
+        <div class="bd">
+          <p class="miniTitle">Percorso selezionato</p>
+          <div class="crumbs" id="crumbs">Nessuna scelta ancora.</div>
+
+          <div class="divider"></div>
+
+          <p class="miniTitle">Input minimi consigliati</p>
+          <div class="kpi">
+            <div class="box"><div class="t">Spirometria</div><div class="v">FEV1, FVC, FEV1/FVC (LLN)</div></div>
+            <div class="box"><div class="t">Volumi</div><div class="v">TLC, RV, RV/TLC (LLN)</div></div>
+            <div class="box"><div class="t">DLCO</div><div class="v">DLCO (Hb-corr), VA, KCO</div></div>
+            <div class="box"><div class="t">Contesto</div><div class="v">Hb, imaging, EO, ABG/TcCO2</div></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <details>
+            <summary>Perché “correggere” la DLCO come pivot?</summary>
+            <p>
+              Nella restrizione confermata, una DLCO ridotta spesso orienta verso patologia intraparenchimale/vascolare,
+              ma può risultare bassa anche per <em>VA ridotta</em> (sub-massima inspirazione, atelettasie, volumi molto bassi),
+              o per anemia, o per <em>quadri misti</em> (es. cifosi severa + ILD iniziale; paralisi diaframmatica + microatelettasie).
+              Per questo il wizard aggiunge: evidenze extrapolmonari (EO/imaging) + pattern VA/KCO + ramo “misto”.
+            </p>
+          </details>
+
+          <div class="divider"></div>
+
+          <p class="miniTitle">Fonti (riassunto)</p>
+          <div class="ref">
+            <ol>
+              <li>ERS/ATS 2022: strategie interpretative; uso di VA e KCO per classificare DLCO bassa.</li>
+              <li>ATS/ERS: test muscoli respiratori (MIP/MEP) e caduta della VC in clinostatismo per debolezza diaframmatica.</li>
+              <li>ERS/Breathe + review ecografia diaframmatica: diagnosi e segni di disfunzione/paralisi.</li>
+            </ol>
+            <p class="muted">I link completi sono mostrati nelle foglie finali.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="t" id="toastTitle">—</div>
+    <div class="m" id="toastMsg">—</div>
+  </div>
+
+<script>
+/**
+ * PFT Interpretation Wizard — single-file
+ * Nota: questo wizard è una riformulazione originale (non una copia) del flusso interpretativo comunemente usato,
+ * e integra estensioni supportate da fonti ERS/ATS. La figura UpToDate fornita dall'utente è usata come ispirazione,
+ * ma testi/impaginazione non sono riprodotti.
+ */
+
+const APP_VERSION = "1.0.1 (2026-02-11)";
+
+/* ---------- Helpers ---------- */
+function leaf({headline, tag, tag2, summary, nextSteps=[], tests=[], redFlags=[], refs=[]}){
+  return {
+    type: "leaf",
+    title: "Esito",
+    subtitle: "Foglia finale: sintesi + suggerimenti operativi.",
+    headline, tag, tag2, summary, nextSteps, tests, redFlags, refs
+  };
+}
+function escapeHtml(str){
+  return (str ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function shortLabel(s){
+  if(!s) return "";
+  const max = 42;
+  return s.length > max ? s.slice(0, max-1) + "…" : s;
+}
+
+/* ---------- References (links) ---------- */
+const references = [
+  {
+    id: "R1",
+    text: "Stanojevic S, Kaminsky DA, Miller MR, et al. ERS/ATS technical standard on interpretive strategies for routine lung function tests. Eur Respir J. 2022;60:2101499.",
+    url: "https://doi.org/10.1183/13993003.01499-2021"
+  },
+  {
+    id: "R2",
+    text: "ATS/ERS Statement on Respiratory Muscle Testing. Am J Respir Crit Care Med. 2002;166:518–624. (supine VC drop, MIP/MEP, SNIP).",
+    url: "https://www.atsjournals.org/doi/10.1164/rccm.166.4.518"
+  },
+  {
+    id: "R3",
+    text: "Jesus F, et al. Diaphragm dysfunction: how to diagnose and how to treat? Breathe (ERS). 2025;21(1):240218.",
+    url: "https://publications.ersnet.org/content/breathe/21/1/240218"
+  },
+  {
+    id: "R4",
+    text: "Modi P, et al. Diffusing Capacity of the Lungs for Carbon Monoxide (DLCO). StatPearls. 2024.",
+    url: "https://www.ncbi.nlm.nih.gov/books/NBK556149/"
+  },
+  {
+    id: "R5",
+    text: "Santana PV, et al. Diaphragmatic ultrasound: methodological review and clinical applications. J Bras Pneumol. 2020;46:e20200064.",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC7909996/"
+  }
+];
+
+/* ---------- Wizard graph ---------- */
+const nodes = {
+  start: {
+    type: "question",
+    title: "Step 1 — Pattern spirometrico",
+    subtitle: "Classifica il pattern iniziale (preferisci LLN / z-score).",
+    prompt: "Qual è il pattern della spirometria?",
+    help: "Suggerimento: se la qualità è dubbia (effort/tecnica), ripeti prima di inferenze diagnostiche robuste.",
+    options: [
+      { label: "FEV1/FVC ridotto con FVC normale → sospetta ostruzione", note: "Pattern ostruttivo.", next: "obs_bdr" },
+      { label: "Spirometria nei limiti → nessun pattern evidente", note: "Se sintomi persistono, considera test aggiuntivi.", next: "normal_symptoms" },
+      { label: "FEV1/FVC normale con VC/FVC bassa → restrizione suggerita", note: "Richiede conferma con TLC.", next: "res_confirm" }
+    ]
+  },
+
+  /* OSTRUZIONE */
+  obs_bdr: {
+    type: "question",
+    title: "Ostruzione — Step 2",
+    subtitle: "Valuta reversibilità dopo broncodilatatore (BDR).",
+    prompt: "È disponibile una risposta al broncodilatatore?",
+    help: "Se non disponibile: può essere utile eseguire BDR o valutare clinica/imaging secondo contesto.",
+    options: [
+      { label: "Sì: l’ostruzione si normalizza (FEV1/FVC torna > LLN)", note: "Compatibile con asma (reversibilità marcata).", next: "leaf_asthma_reversible" },
+      { label: "Sì: miglioramento parziale / FEV1 invariato", note: "Asma vs BPCO/bronchiolite; integra con DLCO.", next: "obs_dlco" },
+      { label: "No / non eseguito", note: "Senza BDR il quadro resta fisiologico: ostruzione.", next: "obs_dlco" }
+    ]
+  },
+  obs_dlco: {
+    type: "question",
+    title: "Ostruzione — Step 3",
+    subtitle: "DLCO orienta su fenotipo (enfisema/vascolare vs airways).",
+    prompt: "Qual è la DLCO (idealmente corretta per Hb)?",
+    help: "DLCO bassa orienta verso enfisema/bronchiolite obliterante o contributo vascolare; DLCO normale/alta verso fenotipo airways.",
+    options: [
+      { label: "DLCO bassa (< LLN)", note: "Compromissione scambio gas.", next: "leaf_obstruction_low_dlco" },
+      { label: "DLCO normale o alta", note: "Fenotipo senza perdita significativa di superficie alveolare.", next: "leaf_obstruction_normal_dlco" },
+      { label: "DLCO non disponibile", note: "Suggerisci DLCO + VA/KCO.", next: "leaf_obstruction_need_dlco" }
+    ]
+  },
+
+  /* SPIROMETRIA NORMALE */
+  normal_symptoms: {
+    type: "question",
+    title: "Spirometria normale — Step 2",
+    subtitle: "La spirometria normale non esclude asma se sintomi sono tipici.",
+    prompt: "Sintomi compatibili con asma (episodici/variabili, trigger, wheeze)?",
+    help: "Se sì: broncoprovocazione/variabilità PEF. Se no: DLCO può essere utile in dispnea inspiegata.",
+    options: [
+      { label: "Sì → broncoprovocazione", note: "Metacolina/esercizio (secondo protocollo).", next: "normal_bpc" },
+      { label: "No / non chiaro → valuta DLCO", note: "Dispnea inspiegata: DLCO può orientare.", next: "normal_dlco" }
+    ]
+  },
+  normal_bpc: {
+    type: "question",
+    title: "Spirometria normale — Step 3",
+    subtitle: "Esito broncoprovocazione.",
+    prompt: "Risultato della broncoprovocazione?",
+    help: "Un calo significativo del FEV1 dopo stimolo supporta asma nel contesto appropriato.",
+    options: [
+      { label: "Positiva (calo significativo FEV1)", note: "Asma più probabile.", next: "leaf_asthma_bpc_pos" },
+      { label: "Negativa / nessuna variazione FEV1", note: "Asma meno probabile (non sempre esclusa).", next: "leaf_asthma_bpc_neg" },
+      { label: "Non eseguita", note: "Valuta alternative (PEF, FeNO, trial).", next: "leaf_asthma_bpc_nd" }
+    ]
+  },
+  normal_dlco: {
+    type: "question",
+    title: "Spirometria normale — Step 3",
+    subtitle: "DLCO come segnale in dispnea senza pattern ventilatorio.",
+    prompt: "Qual è la DLCO (idealmente corretta per Hb)?",
+    help: "DLCO bassa → anemia / ILD precoce / enfisema precoce / vascolare (contesto).",
+    options: [
+      { label: "DLCO bassa (< LLN)", note: "Serve work-up mirato.", next: "leaf_normal_low_dlco" },
+      { label: "DLCO normale o alta", note: "PFT complessivamente nei limiti.", next: "leaf_normal_normal_dlco" },
+      { label: "DLCO non disponibile", note: "Considera DLCO se dispnea non spiegata.", next: "leaf_normal_need_dlco" }
+    ]
+  },
+
+  /* RESTRIZIONE */
+  res_confirm: {
+    type: "question",
+    title: "Restrizione suggerita — Step 2",
+    subtitle: "Conferma con volumi: TLC è discriminante.",
+    prompt: "Cosa mostra la pletismografia / misura dei volumi?",
+    help: "Restrizione confermata se TLC < LLN (≈ <5° percentile). Se TLC normale/alta con VC bassa: pseudo-restrizione / air trapping / effort / pattern non specifico.",
+    options: [
+      { label: "TLC bassa (< LLN) → restrizione confermata", note: "Ora DLCO + contesto guidano.", next: "res_dlco" },
+      { label: "TLC normale o alta → non è una vera restrizione", note: "Considera air trapping o pattern non specifico.", next: "leaf_not_true_restriction" },
+      { label: "Volumi non disponibili", note: "Serve TLC per confermare.", next: "leaf_need_lung_volumes" }
+    ]
+  },
+  res_dlco: {
+    type: "question",
+    title: "Restrizione confermata — Step 3",
+    subtitle: "DLCO è informativa, ma non deve essere l’unico bivio.",
+    prompt: "Qual è la DLCO (idealmente corretta per Hb)?",
+    help: "DLCO normale/alta → spesso extrapolmonare. DLCO bassa → spesso intraparenchimale/vascolare, ma può essere VA bassa/anemia o quadro misto.",
+    options: [
+      { label: "DLCO normale o alta", note: "Più compatibile con cause extrapolmonari.", next: "res_extrapulm_evidence" },
+      { label: "DLCO bassa (< LLN)", note: "Integra Hb, evidenze extrapolmonari, VA/KCO.", next: "res_lowdlco_hb" },
+      { label: "DLCO non disponibile", note: "In restrizione: DLCO+VA+KCO sono utili.", next: "leaf_restriction_need_dlco" }
+    ]
+  },
+
+  /* restrizione + DLCO normale */
+  res_extrapulm_evidence: {
+    type: "question",
+    title: "Restrizione + DLCO normale/alta — Step 4",
+    subtitle: "Driver extrapolmonari (chest wall / NMD / diaframma) diventano centrali.",
+    prompt: "Ci sono evidenze extrapolmonari (uno o più)?",
+    help: "Esempi: cifosi/cifoscoliosi severa, obesità importante, tosse debole, ipoventilazione, imaging con emidiaframma elevato/paradosso, calo VC supina vs seduta.",
+    options: [
+      { label: "Sì: evidenze extrapolmonari presenti", note: "Work-up muscoli respiratori/diaframma.", next: "leaf_extrapulm_restriction" },
+      { label: "No / non chiaro", note: "Con DLCO normale, ILD significativa meno probabile; guida clinica/imaging.", next: "leaf_restriction_normal_dlco_unclear" }
+    ]
+  },
+
+  /* restrizione + DLCO bassa (correzione proposta) */
+  res_lowdlco_hb: {
+    type: "question",
+    title: "Restrizione + DLCO bassa — Step 4",
+    subtitle: "Escludi anemia/tecnica/VA bassa prima di concludere “ILD”.",
+    prompt: "Anemia o DLCO non corretta per Hb sono plausibili?",
+    help: "Hb bassa può ridurre DLCO se non corretta. Una VA molto ridotta può ridurre DLCO anche con KCO normale/alta.",
+    options: [
+      { label: "Sì (Hb bassa o sconosciuta / DLCO non corretta)", note: "Integra CBC e correzione Hb.", next: "res_lowdlco_extrapulm" },
+      { label: "No (Hb normale e DLCO già corretta)", note: "Procedi alla valutazione mista.", next: "res_lowdlco_extrapulm" }
+    ]
+  },
+  res_lowdlco_extrapulm: {
+    type: "question",
+    title: "Restrizione + DLCO bassa — Step 5",
+    subtitle: "Qui inseriamo la tua correzione: evidenze extrapolmonari possono prevalere anche con DLCO bassa.",
+    prompt: "Ci sono forti evidenze extrapolmonari (chest wall / neuromuscolare / diaframma)?",
+    help: "Se sì, VA e KCO diventano decisivi; se no, il ramo intraparenchimale/vascolare è più probabile.",
+    options: [
+      { label: "No: nessuna evidenza extrapolmonare forte", note: "Più probabile intraparenchimale/vascolare (o anemia).", next: "leaf_restriction_lowdlco_parenchymal" },
+      { label: "Sì: evidenze extrapolmonari forti", note: "Valuta VA/KCO per distinguere VA bassa vs KCO bassa.", next: "res_lowdlco_vakco" }
+    ]
+  },
+  res_lowdlco_vakco: {
+    type: "question",
+    title: "Restrizione + DLCO bassa — Step 6 (VA & KCO)",
+    subtitle: "Decomposizione DLCO = VA × KCO per gestire quadri misti.",
+    prompt: "Quale pattern VA/KCO è disponibile?",
+    help: "VA bassa con KCO normale/alta → extrapolmonare con DLCO bassa “da volume”. KCO bassa → componente intraparenchimale/vascolare (quadro misto).",
+    options: [
+      { label: "VA bassa con KCO normale/alta", note: "Supporta extrapolmonare (DLCO bassa da VA bassa).", next: "leaf_restriction_lowdlco_va_low_kco_ok" },
+      { label: "KCO bassa (± VA bassa)", note: "Suggerisce componente intraparenchimale/vascolare → quadro misto.", next: "leaf_restriction_lowdlco_kco_low_mixed" },
+      { label: "VA/KCO non disponibili", note: "Recupera VA/KCO o ripeti DLCO di qualità.", next: "leaf_restriction_lowdlco_need_vakco" }
+    ]
+  },
+
+  /* LEAVES — OSTRUZIONE */
+  leaf_asthma_reversible: leaf({
+    headline: "Ostruzione reversibile: asma probabile",
+    tag: "Ostruzione",
+    tag2: "Asma",
+    summary: "Normalizzazione del rapporto FEV1/FVC dopo broncodilatatore suggerisce asma nel contesto clinico appropriato.",
+    nextSteps: [
+      "Correla con sintomi variabili, trigger, atopia/FeNO (se disponibile).",
+      "Se dubbio: PEF variability, broncoprovocazione o prova terapeutica strutturata.",
+      "Definisci severità e follow-up."
+    ],
+    tests: ["Qualità spirometria/BDR", "FeNO o PEF diary se indicati"],
+    redFlags: ["Dispnea progressiva non episodica", "Emottisi", "Ipossia persistente", "Segni sistemici"],
+    refs: ["[R1]"]
+  }),
+  leaf_obstruction_low_dlco: leaf({
+    headline: "Ostruzione + DLCO bassa: fenotipo con compromissione dello scambio gas",
+    tag: "Ostruzione",
+    tag2: "DLCO bassa",
+    summary: "In ostruzione, DLCO ridotta orienta verso enfisema/bronchiolite obliterante o contributo vascolare; integra con clinica e imaging.",
+    nextSteps: [
+      "Considera HRCT se indicato (enfisema/airways).",
+      "Valuta saturazione a riposo/sforzo; ABG se sospetta ipossiemia/ipercapnia.",
+      "Se sospetto vascolare: eco e iter mirato."
+    ],
+    tests: ["DLCO corretta per Hb", "HRCT se indicata", "6MWT/ossimetria da sforzo", "Ecocardiogramma se sospetto PH"],
+    redFlags: ["Ipossia importante", "Dispnea rapidamente progressiva", "Segni di PH/cuore destro"],
+    refs: ["[R1]","[R4]"]
+  }),
+  leaf_obstruction_normal_dlco: leaf({
+    headline: "Ostruzione + DLCO normale/alta: fenotipo airways (asma/bronchite cronica) più probabile",
+    tag: "Ostruzione",
+    tag2: "DLCO ok",
+    summary: "DLCO preservata in ostruzione è più coerente con coinvolgimento prevalente delle vie aeree, senza significativa perdita di superficie alveolare.",
+    nextSteps: [
+      "Integra con storia (fumo), BDR, eosinofili/FeNO se sospetto asma.",
+      "Se dubbio: ripeti spirometria/BDR o imaging mirato."
+    ],
+    tests: ["BDR/variabilità PEF", "FeNO se indicato"],
+    redFlags: ["Ipossia inusuale", "Emottisi", "Sintomi sistemici"],
+    refs: ["[R1]"]
+  }),
+  leaf_obstruction_need_dlco: leaf({
+    headline: "Ostruzione: DLCO non disponibile",
+    tag: "Ostruzione",
+    tag2: "Dato mancante",
+    summary: "La DLCO aiuta a distinguere fenotipi e a motivare un work-up (enfisema/vascolare vs airways).",
+    nextSteps: [
+      "Esegui DLCO corretta per Hb e, se possibile, annota VA e KCO.",
+      "Integra con saturazione da sforzo se dispnea importante."
+    ],
+    tests: ["DLCO + VA + KCO", "CBC (Hb)"],
+    redFlags: ["Dispnea severa non spiegata", "Ipossia", "Segni di PH"],
+    refs: ["[R1]","[R4]"]
+  }),
+
+  /* LEAVES — SPIROMETRIA NORMALE */
+  leaf_asthma_bpc_pos: leaf({
+    headline: "Spirometria normale + broncoprovocazione positiva: asma più probabile",
+    tag: "Normale",
+    tag2: "Asma",
+    summary: "Con sintomi suggestivi e broncoprovocazione positiva, l’asma è più probabile anche se spirometria basale è normale.",
+    nextSteps: ["Imposta terapia e follow-up; rivaluta con spirometria.", "Documenta variabilità e trigger."],
+    tests: ["Broncoprovocazione documentata", "PEF diary"],
+    redFlags: ["Dispnea progressiva", "Ipossia", "Sintomi sistemici"],
+    refs: ["[R1]"]
+  }),
+  leaf_asthma_bpc_neg: leaf({
+    headline: "Spirometria normale + broncoprovocazione negativa: asma meno probabile",
+    tag: "Normale",
+    tag2: "Asma meno probabile",
+    summary: "Un test negativo riduce la probabilità di asma (dipende da farmaci e timing). Considera alternative per dispnea/tosse.",
+    nextSteps: ["Rivaluta diagnosi differenziale (VCD, cardiaco, anemia, decondizionamento).", "Se persiste sospetto: FeNO/PEF o ripetere test in condizioni appropriate."],
+    tests: ["FeNO/PEF se indicati", "Valutazione cardiologica se dispnea"],
+    redFlags: ["Sincope", "Dolore toracico", "Desaturazione"],
+    refs: ["[R1]"]
+  }),
+  leaf_asthma_bpc_nd: leaf({
+    headline: "Spirometria normale: broncoprovocazione non eseguita",
+    tag: "Normale",
+    tag2: "Work-up",
+    summary: "Se i sintomi sono suggestivi, broncoprovocazione o percorsi alternativi (PEF variability, FeNO) possono chiarire.",
+    nextSteps: ["Valuta indicazione e controindicazioni alla broncoprovocazione.", "Considera PEF diary, FeNO o trial terapeutico strutturato."],
+    tests: ["FeNO", "PEF diary"],
+    redFlags: ["Dispnea progressiva", "Ipossia"],
+    refs: ["[R1]"]
+  }),
+  leaf_normal_low_dlco: leaf({
+    headline: "Spirometria normale + DLCO bassa: anemia / ILD precoce / vascolare (contesto)",
+    tag: "Normale",
+    tag2: "DLCO bassa",
+    summary: "Con spirometria normale, DLCO bassa è un campanello: anemia, ILD precoce, enfisema precoce o patologia vascolare polmonare.",
+    nextSteps: ["Verifica Hb e qualità tecnica (inspirazione).", "Se sospetto ILD: HRCT e consulto.", "Se sospetto vascolare: eco e iter mirato."],
+    tests: ["CBC (Hb)", "DLCO con VA/KCO", "HRCT se indicata", "Ecocardiogramma se sospetto PH"],
+    redFlags: ["Dispnea rapidamente progressiva", "Desaturazione significativa da sforzo", "Segni di PH"],
+    refs: ["[R1]","[R4]"]
+  }),
+  leaf_normal_normal_dlco: leaf({
+    headline: "Spirometria normale + DLCO normale/alta: PFT complessivamente nei limiti",
+    tag: "Normale",
+    tag2: "DLCO ok",
+    summary: "DLCO preservata con spirometria normale rende meno probabili ILD/vascolare significative, ma non esclude cause extrapolmonari di dispnea.",
+    nextSteps: ["Se dispnea: valuta cardiaco, anemia, decondizionamento, disfunzioni funzionali.", "Se clinica forte: test da sforzo (CPET) e/o imaging mirato."],
+    tests: ["CBC", "ECG/Eco se indicati", "CPET se indicato"],
+    redFlags: ["Dispnea a riposo nuova", "Ipossia", "Dolore toracico/sincope"],
+    refs: ["[R1]"]
+  }),
+  leaf_normal_need_dlco: leaf({
+    headline: "Spirometria normale: DLCO non disponibile",
+    tag: "Normale",
+    tag2: "Dato mancante",
+    summary: "In dispnea non spiegata, DLCO (con VA/KCO) può dare un segnale precoce di patologia parenchimale/vascolare o anemia.",
+    nextSteps: ["Esegui DLCO corretta per Hb e annota VA/KCO.", "Integra con test da sforzo se necessario."],
+    tests: ["DLCO + VA + KCO", "CBC (Hb)"],
+    redFlags: ["Desaturazione", "Dispnea severa"],
+    refs: ["[R1]","[R4]"]
+  }),
+
+  /* LEAVES — RESTRIZIONE */
+  leaf_need_lung_volumes: leaf({
+    headline: "Restrizione suggerita: serve conferma con TLC",
+    tag: "Restrizione?",
+    tag2: "TLC mancante",
+    summary: "Con FEV1/FVC normale e VC bassa, la restrizione è solo suggerita. TLC è necessaria per confermare.",
+    nextSteps: ["Richiedi volumi: TLC, RV, RV/TLC.", "Controlla qualità spirometria e ripeti se dubbio."],
+    tests: ["Pletismografia (TLC, RV, RV/TLC)"],
+    redFlags: ["Progressione rapida", "Ipossia", "Sintomi sistemici"],
+    refs: ["[R1]"]
+  }),
+  leaf_not_true_restriction: leaf({
+    headline: "VC bassa ma TLC normale/alta: non è una vera restrizione",
+    tag: "Pseudo-restrizione",
+    tag2: "Air trapping / pattern non specifico",
+    summary: "Se TLC è normale/alta, VC/FVC bassa può riflettere air trapping (ostruzione) o effort/pattern non specifico.",
+    nextSteps: ["Valuta RV e RV/TLC.", "Riconsidera ostruzione/PRISm/pattern non specifico; integra clinica/imaging.", "Ripeti test se qualità sub-ottimale."],
+    tests: ["RV, RV/TLC", "BDR se indicato"],
+    redFlags: ["Dispnea severa con ipossia", "Emottisi", "Segni sistemici"],
+    refs: ["[R1]"]
+  }),
+  leaf_restriction_need_dlco: leaf({
+    headline: "Restrizione confermata: DLCO/VA/KCO mancanti",
+    tag: "Restrizione",
+    tag2: "Dato mancante",
+    summary: "In restrizione confermata, DLCO (Hb-corretta) e la decomposizione VA/KCO aiutano a distinguere intraparenchimale/vascolare da extrapolmonare e quadri misti.",
+    nextSteps: ["Esegui DLCO (Hb-corretta) e recupera VA e KCO dal report.", "Integra con Hb, imaging e segni clinici (cifosi, debolezza, diaframma)."],
+    tests: ["DLCO + VA + KCO", "CBC (Hb)"],
+    redFlags: ["Dispnea progressiva", "Desaturazione", "Ipossia/ipercapnia"],
+    refs: ["[R1]","[R4]"]
+  }),
+  leaf_extrapulm_restriction: leaf({
+    headline: "Restrizione + DLCO normale/alta: causa extrapolmonare probabile",
+    tag: "Restrizione",
+    tag2: "Extrapolmonare",
+    summary: "DLCO preservata in restrizione è tipicamente coerente con cause extrapolmonari (chest wall, obesità, neuromuscolare, diaframma).",
+    nextSteps: [
+      "Se sospetta debolezza diaframmatica: confronta VC seduta vs supina; una caduta significativa supporta coinvolgimento diaframma.",
+      "Esegui MIP/MEP (± SNIP) e valuta segni di ipoventilazione.",
+      "Imaging funzionale diaframma: ecografia (M-mode) o sniff test; valuta notturno (ossimetria/TcCO₂) se indicato."
+    ],
+    tests: ["VC supina vs seduta", "MIP/MEP ± SNIP", "Ecografia diaframmatica/sniff", "ABG/TcCO₂ se sospetta ipoventilazione", "Ossimetria notturna"],
+    redFlags: ["Ipercapnia", "Desaturazioni notturne importanti", "Infezioni ricorrenti/aspirazione"],
+    refs: ["[R1]","[R2]","[R3]","[R5]"]
+  }),
+  leaf_restriction_normal_dlco_unclear: leaf({
+    headline: "Restrizione + DLCO normale/alta ma senza evidenze extrapolmonari chiare",
+    tag: "Restrizione",
+    tag2: "Da contestualizzare",
+    summary: "DLCO preservata riduce probabilità di ILD significativa; guida clinica e imaging (e considera variabilità/tecnica).",
+    nextSteps: ["Rivedi imaging se sintomi/crepitii suggeriscono ILD/pleurica.", "Valuta anemia, qualità DLCO, replicabilità.", "Considera consulto specialistico se sintomi importanti."],
+    tests: ["HRCT se indicata", "CBC (Hb)", "Ripetizione DLCO se dubbio tecnico"],
+    redFlags: ["Progressione rapida", "Desaturazione", "Segni sistemici"],
+    refs: ["[R1]","[R4]"]
+  }),
+  leaf_restriction_lowdlco_parenchymal: leaf({
+    headline: "Restrizione + DLCO bassa senza driver extrapolmonari: intraparenchimale/vascolare più probabile",
+    tag: "Restrizione",
+    tag2: "DLCO bassa",
+    summary: "Con restrizione confermata e DLCO bassa, in assenza di forti driver extrapolmonari, orienta verso ILD/vascolare; verifica anemia e tecnica.",
+    nextSteps: ["Controlla Hb e qualità manovra.", "Se sospetto ILD: HRCT e work-up secondo contesto.", "Se sospetto vascolare: eco e iter mirato."],
+    tests: ["CBC (Hb)", "HRCT", "Eco ± test vascolari se indicati"],
+    redFlags: ["Desaturazione marcata", "Ipossia a riposo", "Segni di PH"],
+    refs: ["[R1]","[R4]"]
+  }),
+  leaf_restriction_lowdlco_va_low_kco_ok: leaf({
+    headline: "Restrizione + DLCO bassa con VA bassa e KCO normale/alta: extrapolmonare con DLCO “abbassata da volume”",
+    tag: "Restrizione",
+    tag2: "Extrapolmonare (probabile)",
+    summary: "KCO preservata suggerisce efficienza di scambio per unità di volume mantenuta; DLCO complessiva è bassa perché VA è ridotta. Coerente con NMD/chest wall/diaframma, anche se DLCO < LLN.",
+    nextSteps: ["Conferma driver extrapolmonare (EO/imaging).", "Esegui VC supina vs seduta e test muscoli respiratori (MIP/MEP ± SNIP).", "Se sospetto componente parenchimale concomitante: HRCT mirata (quadro misto possibile)."],
+    tests: ["VA e KCO dal report DLCO", "VC supina vs seduta", "MIP/MEP ± SNIP", "Ecografia diaframma/sniff", "HRCT se indicata"],
+    redFlags: ["Ipercapnia", "Desaturazione notturna", "Debolezza rapidamente progressiva"],
+    refs: ["[R1]","[R2]","[R3]"]
+  }),
+  leaf_restriction_lowdlco_kco_low_mixed: leaf({
+    headline: "Restrizione + driver extrapolmonare ma KCO bassa: quadro misto probabile",
+    tag: "Restrizione",
+    tag2: "Misto",
+    summary: "KCO ridotta suggerisce componente intraparenchimale/vascolare oltre al driver extrapolmonare → gestire come quadro misto (non “o/o”).",
+    nextSteps: [
+      "Work-up parallelo extrapolmonare + parenchimale/vascolare.",
+      "Extrapolmonare: VC supina, MIP/MEP ± SNIP, imaging diaframma, valutazione ipoventilazione (ABG/TcCO₂, notturno).",
+      "Parenchimale/vascolare: HRCT, Hb, eco e test mirati secondo probabilità pre-test."
+    ],
+    tests: ["CBC (Hb)", "HRCT", "Eco ± V/Q/CT se indicato", "MIP/MEP ± SNIP", "VC supina vs seduta", "Ecografia diaframma"],
+    redFlags: ["Desaturazione significativa", "Ipercapnia", "Progressione rapida", "Segni di PH"],
+    refs: ["[R1]","[R2]","[R4]"]
+  }),
+  leaf_restriction_lowdlco_need_vakco: leaf({
+    headline: "Restrizione + DLCO bassa con driver extrapolmonare: manca VA/KCO",
+    tag: "Restrizione",
+    tag2: "Serve VA/KCO",
+    summary: "Per distinguere DLCO bassa “da volume” (VA bassa, KCO ok) da DLCO bassa “da membrana/vascolare” (KCO bassa) serve VA e KCO dal report DLCO o una ripetizione di qualità.",
+    nextSteps: ["Recupera VA e KCO dal report.", "Se manovra non ottimale: ripeti DLCO con coaching.", "Integra Hb e imaging se sospetto di componente parenchimale."],
+    tests: ["DLCO + VA + KCO", "CBC (Hb)", "HRCT se indicata"],
+    redFlags: ["Ipercapnia", "Ipossia", "Progressione rapida"],
+    refs: ["[R1]"]
+  })
+};
+
+/* ---------- UI logic ---------- */
+let currentId = "start";
+let history = []; // {nodeId, choiceLabel}
+let lastLeaf = null;
+
+const elTitle = document.getElementById("stepTitle");
+const elSub = document.getElementById("stepSubtitle");
+const elBadge = document.getElementById("stepBadge");
+const elBody = document.getElementById("mainBody");
+const elCrumbs = document.getElementById("crumbs");
+const elStateBadge = document.getElementById("stateBadge");
+
+function showToast(title, msg){
+  const t = document.getElementById("toast");
+  document.getElementById("toastTitle").textContent = title;
+  document.getElementById("toastMsg").textContent = msg;
+  t.style.display = "block";
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>{ t.style.display = "none"; }, 2600);
+}
+
+function renderRefs(refIds){
+  const used = new Map(references.map(r=>[r.id, r]));
+  const mentionedIds = (refIds || []).map(x=>{
+    const m = (x||"").match(/\[([Rr]\d+)\]/);
+    return m ? m[1].toUpperCase() : null;
+  }).filter(Boolean);
+  const ids = mentionedIds.length ? [...new Set(mentionedIds)] : references.map(r=>r.id);
+
+  const items = ids.map(id=>{
+    const r = used.get(id);
+    if(!r) return "";
+    return `<li><strong>${id}</strong> — ${escapeHtml(r.text)} <a href="${r.url}" target="_blank" rel="noopener">link</a></li>`;
+  }).filter(Boolean);
+
+  items.push(`<li><strong>Nota</strong> — Flusso ispirato (non copiato) dalla figura UpToDate “Algorithm for pulmonary function test interpretation” fornita dall’utente; estensioni implementate con i riferimenti sopra.</li>`);
+  return `<ol>${items.join("")}</ol>`;
+}
+
+function buildClipboardText(){
+  const now = new Date();
+  const dt = now.toISOString().replace("T"," ").slice(0,19) + "Z";
+  const pathLines = history.map((h, i)=>`${i+1}. ${h.choiceLabel}`).join("\n");
+  const leaf = lastLeaf;
+
+  const leafBlock = leaf ? [
+    `ESITO: ${leaf.headline}`,
+    ``,
+    `${leaf.summary}`,
+    ``,
+    `AZIONI SUGGERITE:`,
+    ...(leaf.nextSteps||[]).map(x=>`- ${x}`),
+    ``,
+    ...(leaf.tests && leaf.tests.length ? ["ESAMI/VALUTAZIONI UTILI:", ...(leaf.tests||[]).map(x=>`- ${x}`), ""] : []),
+    ...(leaf.redFlags && leaf.redFlags.length ? ["RED FLAGS:", ...(leaf.redFlags||[]).map(x=>`- ${x}`), ""] : []),
+  ].join("\n") : "ESITO: (non disponibile)";
+
+  const refText = references.map(r=>`- ${r.id}: ${r.text} (${r.url})`).join("\n");
+
+  return [
+    `PFT Interpretation Wizard — export (v${APP_VERSION})`,
+    `Data: ${dt}`,
+    ``,
+    `PERCORSO:`,
+    pathLines || "(nessuna scelta)",
+    ``,
+    leafBlock,
+    `RIFERIMENTI:`,
+    refText,
+    ``,
+    `Nota: strumento didattico; integra clinica, imaging e giudizio professionale.`
+  ].join("\n");
+}
+
+async function copyToClipboard(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch(e){}
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){
+    return false;
+  }
+}
+
+function render(){
+  const node = nodes[currentId];
+  if(!node){
+    elTitle.textContent = "Errore";
+    elSub.textContent = "Nodo non trovato: " + currentId;
+    elBody.innerHTML = "<p class='help'>Controlla la definizione dei nodi.</p>";
+    return;
+  }
+
+  elTitle.textContent = node.title || "—";
+  elSub.textContent = node.subtitle || "";
+  elBadge.textContent = node.type === "leaf" ? "Esito" : "Wizard";
+  elStateBadge.textContent = `${history.length} step`;
+
+  if(history.length === 0){
+    elCrumbs.textContent = "Nessuna scelta ancora.";
+  } else {
+    const parts = history.map(h => `<code>${escapeHtml(shortLabel(h.choiceLabel))}</code>`);
+    elCrumbs.innerHTML = parts.join(" <span class='muted'>→</span> ");
+  }
+
+  if(node.type === "question"){
+    lastLeaf = null;
+    elBody.innerHTML = `
+      <p class="prompt">${escapeHtml(node.prompt || "")}</p>
+      <p class="help">${escapeHtml(node.help || "")}</p>
+      <div class="opts" id="opts"></div>
+      <div class="row">
+        <button class="btn3" id="btnBack" ${history.length===0 ? "disabled" : ""}>← Indietro</button>
+        <button class="btn3 btnDanger" id="btnReset">Reset</button>
+      </div>
+      <div class="divider"></div>
+      <details>
+        <summary>Info rapida su soglie e qualità</summary>
+        <p>
+          • “Basso” = sotto LLN (≈ 5° percentile).<br>
+          • Restrizione confermata: TLC < LLN.<br>
+          • DLCO: considera correzione Hb e criteri di qualità; in caso di dubbi ripetere con coaching.
+          L’interpretazione VA/KCO è particolarmente utile nei quadri extrapolmonari/misti.
+        </p>
+      </details>
+    `;
+    const opts = document.getElementById("opts");
+    node.options.forEach((opt)=>{
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.innerHTML = `<div>${escapeHtml(opt.label)}</div>${opt.note ? `<span class="small">${escapeHtml(opt.note)}</span>` : ""}`;
+      b.addEventListener("click", ()=>{
+        history.push({nodeId: currentId, choiceLabel: opt.label});
+        currentId = opt.next;
+        render();
+      });
+      opts.appendChild(b);
+    });
+
+    document.getElementById("btnBack").addEventListener("click", ()=>{
+      if(history.length===0) return;
+      const last = history.pop();
+      currentId = last.nodeId;
+      render();
+    });
+    document.getElementById("btnReset").addEventListener("click", ()=>{
+      history = [];
+      currentId = "start";
+      render();
+      showToast("Reset", "Percorso azzerato.");
+    });
+
+  } else if(node.type === "leaf"){
+    lastLeaf = node;
+
+    const redFlagsHtml = (node.redFlags && node.redFlags.length)
+      ? `<div class="dangerBox"><strong>Red flags</strong><ul class="list">${node.redFlags.map(li=>`<li>${escapeHtml(li)}</li>`).join("")}</ul></div>`
+      : "";
+    const testsHtml = (node.tests && node.tests.length)
+      ? `<div class="warnBox"><strong>Esami/valutazioni utili</strong><ul class="list">${node.tests.map(li=>`<li>${escapeHtml(li)}</li>`).join("")}</ul></div>`
+      : "";
+
+    elBody.innerHTML = `
+      <div class="leafHead">
+        <span class="tag tagStrong">${escapeHtml(node.tag || "Esito")}</span>
+        ${node.tag2 ? `<span class="tag">${escapeHtml(node.tag2)}</span>` : ""}
+        <span class="tag">v${APP_VERSION}</span>
+      </div>
+      <h3 style="margin:0 0 8px 0; font-size:16px">${escapeHtml(node.headline || "Esito")}</h3>
+      <p class="help" style="margin-top:0">${escapeHtml(node.summary || "")}</p>
+
+      <div class="divider"></div>
+      <strong>Azioni suggerite</strong>
+      <ul class="list">${(node.nextSteps||[]).map(li=>`<li>${escapeHtml(li)}</li>`).join("")}</ul>
+
+      <div class="divider"></div>
+      <div class="opts" style="gap:12px">
+        ${testsHtml}
+        ${redFlagsHtml}
+      </div>
+
+      <div class="divider"></div>
+      <strong>Riferimenti</strong>
+      <div class="ref">${renderRefs(node.refs || [])}</div>
+
+      <div class="row">
+        <button class="btn3" id="btnBack">← Indietro</button>
+        <button class="btn3 btnDanger" id="btnReset">Reset</button>
+        <button class="btn2 btnOk" id="btnCopy">Copia esito + suggerimenti</button>
+      </div>
+    `;
+
+    document.getElementById("btnBack").addEventListener("click", ()=>{
+      if(history.length===0){ currentId="start"; render(); return; }
+      const last = history.pop();
+      currentId = last.nodeId;
+      render();
+    });
+    document.getElementById("btnReset").addEventListener("click", ()=>{
+      history = [];
+      currentId = "start";
+      render();
+      showToast("Reset", "Percorso azzerato.");
+    });
+    document.getElementById("btnCopy").addEventListener("click", async ()=>{
+      const text = buildClipboardText();
+      const ok = await copyToClipboard(text);
+      showToast(ok ? "Copiato" : "Copia non riuscita", ok ? "Esito copiato negli appunti." : "Copia manualmente il testo.");
+    });
+  } else {
+    elBody.innerHTML = "<p class='help'>Tipo nodo non riconosciuto.</p>";
+  }
+}
+
+render();
+</script>
+</body>
+</html>
